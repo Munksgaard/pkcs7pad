@@ -22,10 +22,22 @@ pub fn validate_padding(input: &[u8]) -> bool {
         .all(|x: &u8| x == last)
 }
 
+pub fn unpad(input: &[u8]) -> Vec<u8> {
+    assert!(validate_padding(input));
+
+    let last = *input.last().unwrap();
+
+    let mut result = input.to_vec();
+
+    result.truncate(input.len() - last as uint);
+    result
+}
+
 #[cfg(test)]
 mod test {
     use super::pad;
     use super::validate_padding;
+    use super::unpad;
 
     #[test]
     fn pad_test_1() {
@@ -110,4 +122,35 @@ mod test {
                       0x10, 0x10, 0x10, 0x10];
         assert!(!validate_padding(input));
     }
+
+    #[test]
+    fn unpad_test_1() {
+        let input = &[0x59, 0x45, 0x4C, 0x4C,
+                      0x4F, 0x57, 0x20, 0x53,
+                      0x42, 0x55, 0x4D, 0x41,
+                      0x49, 0x52, 0x4E, 0x01];
+        let expected = vec![0x59, 0x45, 0x4C, 0x4C,
+                            0x4F, 0x57, 0x20, 0x53,
+                            0x42, 0x55, 0x4D, 0x41,
+                            0x49, 0x52, 0x4E];
+        assert_eq!(unpad(input), expected);
+    }
+
+    #[test]
+    fn unpad_test_2() {
+        let input = &[0x59, 0x45, 0x4C, 0x4C,
+                      0x4F, 0x57, 0x20, 0x53,
+                      0x42, 0x55, 0x4D, 0x41,
+                      0x49, 0x52, 0x4E, 0x45,
+                      0x10, 0x10, 0x10, 0x10,
+                      0x10, 0x10, 0x10, 0x10,
+                      0x10, 0x10, 0x10, 0x10,
+                      0x10, 0x10, 0x10, 0x10];
+        let expected = vec![0x59, 0x45, 0x4C, 0x4C,
+                            0x4F, 0x57, 0x20, 0x53,
+                            0x42, 0x55, 0x4D, 0x41,
+                            0x49, 0x52, 0x4E, 0x45];
+        assert_eq!(unpad(input), expected);
+    }
+
 }
