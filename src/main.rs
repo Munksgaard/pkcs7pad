@@ -4,17 +4,27 @@ extern crate pkcs7pad;
 use std::os;
 use std::io::{stdin, File};
 use getopts::{optopt, usage, getopts, optflag};
-use pkcs7pad::pad;
+use pkcs7pad::{pad, unpad, validate_padding};
+
+enum Operation {
+    Pad,
+    Unpad,
+    Validate,
+}
 
 #[allow(dead_code)]
 fn main() {
     let opts = [optopt("s", "size", "block size (default 16)", "SIZE"),
-                optflag("h", "help", "show usage")];
+                optflag("h", "help", "show usage"),
+                optflag("p", "pad", "pad"),
+                optflag("u", "unpad", "unpad"),
+                optflag("", "validate", "validate")];
 
     let m = getopts(os::args().tail(), opts).ok().expect("Fail");
 
     if m.opt_present("h") {
         println!("{}", usage("Pad some text using PKCS#7 padding", opts));
+        std::os::set_exit_status(1);
         return;
     }
 
@@ -31,7 +41,24 @@ fn main() {
         _ => stdin().read_to_end().ok().expect("Fail"),
     };
 
-    let result = pad(input.as_slice(), bsize);
+    let operation =
+        if m.opt_present("validate") {
+            Validate
+        } else if m.opt_present("unpad") {
+            Unpad
+        } else {
+            Pad
+        };
 
-    print!("{}", result.into_ascii().into_string());
+    match operation {
+        Pad => {
+            let result = pad(input.as_slice(), bsize);
+            print!("{}", result.into_ascii().into_string());},
+        Unpad => {
+            let result = unpad(input.as_slice());
+            print!("{}", result.into_ascii().into_string());},
+        Validate => {
+            if validate_padding(input.as_slice()) {
+                std::os::set_exit_status(1);}},
+    };
 }
