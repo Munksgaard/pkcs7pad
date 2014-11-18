@@ -36,5 +36,5 @@ fn main() {
 
     input.grow(pad as uint, pad);
 
-    println!("{}", input.into_ascii().into_string());
+    print!("{}", input.into_ascii().into_string());
 }
