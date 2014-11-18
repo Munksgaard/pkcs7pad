@@ -24,7 +24,6 @@ fn main() {
 
     if m.opt_present("h") {
         println!("{}", usage("Pad some text using PKCS#7 padding", opts));
-        std::os::set_exit_status(1);
         return;
     }
 
