@@ -1,9 +1,12 @@
 extern crate getopts;
+extern crate pkcs7pad;
 
 use std::os;
 use std::io::{stdin, File};
 use getopts::{optopt, usage, getopts, optflag};
+use pkcs7pad::pad;
 
+#[allow(dead_code)]
 fn main() {
     let opts = [optopt("s", "size", "block size (default 16)", "SIZE"),
                 optflag("h", "help", "show usage")];
@@ -20,7 +23,7 @@ fn main() {
         None => 16
     };
 
-    let mut input: Vec<u8> = match m.free.as_slice() {
+    let input: Vec<u8> = match m.free.as_slice() {
         [ref s, ..] => {
             let mut file = File::open(&Path::new(s));
             let input = file.read_to_end();
@@ -28,13 +31,7 @@ fn main() {
         _ => stdin().read_to_end().ok().expect("Fail"),
     };
 
-    let pad = if input.len() % (bsize as uint) == 0 {
-        bsize
-    } else {
-        bsize - ((input.len() % (bsize as uint)) as u8)
-    };
+    let result = pad(input.as_slice(), bsize);
 
-    input.grow(pad as uint, pad);
-
-    print!("{}", input.into_ascii().into_string());
+    print!("{}", result.into_ascii().into_string());
 }
