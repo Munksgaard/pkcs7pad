@@ -20,10 +20,10 @@ fn main() {
                 optflag("u", "unpad", "unpad"),
                 optflag("", "validate", "validate")];
 
-    let m = getopts(os::args().tail(), opts).ok().expect("Fail");
+    let m = getopts(os::args().tail(), &opts).ok().expect("Fail");
 
     if m.opt_present("h") {
-        println!("{}", usage("Pad some text using PKCS#7 padding", opts));
+        println!("{}", usage("Pad some text using PKCS#7 padding", &opts));
         return;
     }
 
@@ -42,21 +42,21 @@ fn main() {
 
     let operation =
         if m.opt_present("validate") {
-            Validate
+            Operation::Validate
         } else if m.opt_present("unpad") {
-            Unpad
+            Operation::Unpad
         } else {
-            Pad
+            Operation::Pad
         };
 
     match operation {
-        Pad => {
+        Operation::Pad => {
             let result = pad(input.as_slice(), bsize);
             print!("{}", result.into_ascii().into_string());},
-        Unpad => {
+        Operation::Unpad => {
             let result = unpad(input.as_slice());
             print!("{}", result.into_ascii().into_string());},
-        Validate => {
+        Operation::Validate => {
             if validate_padding(input.as_slice()) {
                 std::os::set_exit_status(1);}},
     };
