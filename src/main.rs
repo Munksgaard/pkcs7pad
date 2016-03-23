@@ -1,10 +1,16 @@
+#![feature(slice_patterns)]
+
 extern crate getopts;
 extern crate pkcs7pad;
 
-use std::os;
-use std::io::{stdin, File};
-use getopts::{optopt, usage, getopts, optflag};
+use std::path::Path;
+use std::fs::File;
+use std::io::Read;
+use std::io::stdin;
+use getopts::Options;
+//{optopt, usage, getopts, optflag};
 use pkcs7pad::{pad, unpad, validate_padding};
+use std::str::FromStr;
 
 enum Operation {
     Pad,
@@ -14,30 +20,40 @@ enum Operation {
 
 #[allow(dead_code)]
 fn main() {
-    let opts = [optopt("s", "size", "block size (default 16)", "SIZE"),
-                optflag("h", "help", "show usage"),
-                optflag("p", "pad", "pad"),
-                optflag("u", "unpad", "unpad"),
-                optflag("", "validate", "validate")];
+    let mut opts = Options::new();
 
-    let m = getopts(os::args().tail(), &opts).ok().expect("Fail");
+    opts.optopt("s", "size", "block size (default 16)", "SIZE");
+    opts.optflag("h", "help", "show usage");
+    opts.optflag("p", "pad", "pad");
+    opts.optflag("u", "unpad", "unpad");
+    opts.optflag("", "validate", "validate");
+
+    let args: Vec<String> = std::env::args().collect();
+    let m = opts.parse(&args[1..]).ok().expect("Fail");
 
     if m.opt_present("h") {
-        println!("{}", usage("Pad some text using PKCS#7 padding", &opts));
+        println!("{}", opts.usage("Pad some text using PKCS#7 padding"));
         return;
     }
 
     let bsize = match m.opt_str("s") {
-        Some(s) => from_str::<u8>(s.as_slice()).unwrap(),
-        None => 16
+        Some(s) => u8::from_str(&s).unwrap(),
+        None => 16u8
     };
 
     let input: Vec<u8> = match m.free.as_slice() {
         [ref s, ..] => {
-            let mut file = File::open(&Path::new(s));
-            let input = file.read_to_end();
-            input.ok().expect("Fail")},
-        _ => stdin().read_to_end().ok().expect("Fail"),
+            let mut buf = Vec::new();
+            let file = File::open(&Path::new(s));
+            let mut input = file.unwrap();
+            input.read_to_end(&mut buf).unwrap();
+            buf
+        },
+        _ => {
+            let mut buf = Vec::new();
+            stdin().read_to_end(&mut buf).unwrap();
+            buf
+        }
     };
 
     let operation =
@@ -52,12 +68,12 @@ fn main() {
     match operation {
         Operation::Pad => {
             let result = pad(input.as_slice(), bsize);
-            print!("{}", result.into_ascii().into_string());},
+            print!("{}", String::from_utf8(result).unwrap());},
         Operation::Unpad => {
             let result = unpad(input.as_slice());
-            print!("{}", result.into_ascii().into_string());},
+            print!("{}", String::from_utf8(result).unwrap());},
         Operation::Validate => {
             if validate_padding(input.as_slice()) {
-                std::os::set_exit_status(1);}},
+                std::process::exit(1);}},
     };
 }

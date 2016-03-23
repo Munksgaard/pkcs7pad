@@ -1,12 +1,13 @@
 pub fn pad(input: &[u8], bsize: u8) -> Vec<u8> {
     let mut input = input.to_vec();
-    let padding = if input.len() % (bsize as uint) == 0 {
+    let padding = if input.len() % (bsize as usize) == 0 {
         bsize
     } else {
-        bsize - ((input.len() % (bsize as uint)) as u8)
+        bsize - ((input.len() % (bsize as usize)) as u8)
     };
+    let len = input.len();
 
-    input.grow(padding as uint, padding);
+    input.resize(len + padding as usize, padding);
     input
 }
 
@@ -18,7 +19,7 @@ pub fn validate_padding(input: &[u8]) -> bool {
 
     input
         .iter()
-        .skip(input.len() - (*last as uint))
+        .skip(input.len() - (*last as usize))
         .all(|x: &u8| x == last)
 }
 
@@ -29,7 +30,7 @@ pub fn unpad(input: &[u8]) -> Vec<u8> {
 
     let mut result = input.to_vec();
 
-    result.truncate(input.len() - last as uint);
+    result.truncate(input.len() - last as usize);
     result
 }
 
@@ -153,4 +154,22 @@ mod test {
         assert_eq!(unpad(input), expected);
     }
 
+    #[test]
+    fn chal15_validate_1() {
+        let input = b"ICE ICE BABY\x04\x04\x04\x04";
+
+        assert!(validate_padding(input));
+    }
+
+    #[test]
+    fn chal15_validate_2() {
+        let input = b"ICE ICE BABY\x05\x05\x05\x05";
+        assert!(!validate_padding(input));
+    }
+
+    #[test]
+    fn chal15_validate_3() {
+        let input = b"ICE ICE BABY\x01\x02\x03\x04";
+        assert!(!validate_padding(input));
+    }
 }
