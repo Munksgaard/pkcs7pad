@@ -13,14 +13,18 @@ pub fn pad(input: &[u8], bsize: u8) -> Vec<u8> {
 
 pub fn validate_padding(input: &[u8]) -> bool {
     let last = match input.last() {
-        Some(x) => x,
+        Some(x) => *x,
         None => return false,
     };
 
+    if last > input.len() as u8 || last == 0 {
+        return false;
+    }
+
     input
         .iter()
-        .skip(input.len() - (*last as usize))
-        .all(|x: &u8| x == last)
+        .skip(input.len() - (last as usize))
+        .all(|x: &u8| *x == last)
 }
 
 pub fn unpad(input: &[u8]) -> Vec<u8> {
@@ -121,6 +125,21 @@ mod test {
                       0x10, 0x10, 0x10, 0x10,
                       0x10, 0x10, 0x10, 0x10,
                       0x10, 0x10, 0x10, 0x10];
+        assert!(!validate_padding(input));
+    }
+
+    #[test]
+    fn validate_padding_test_5() {
+        let input = &[0xFF];
+        assert!(!validate_padding(input));
+    }
+
+    #[test]
+    fn validate_padding_test_6() {
+        let input = &[0x00, 0x00, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00];
         assert!(!validate_padding(input));
     }
 
