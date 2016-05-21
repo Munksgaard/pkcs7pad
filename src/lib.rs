@@ -27,15 +27,17 @@ pub fn validate_padding(input: &[u8]) -> bool {
         .all(|x: &u8| *x == last)
 }
 
-pub fn unpad(input: &[u8]) -> Vec<u8> {
-    assert!(validate_padding(input));
+pub fn unpad(input: &[u8]) -> Option<Vec<u8>> {
+    if !validate_padding(input) {
+        return None;
+    }
 
     let last = *input.last().unwrap();
 
     let mut result = input.to_vec();
 
     result.truncate(input.len() - last as usize);
-    result
+    Some(result)
 }
 
 #[cfg(test)]
@@ -153,7 +155,7 @@ mod test {
                             0x4F, 0x57, 0x20, 0x53,
                             0x42, 0x55, 0x4D, 0x41,
                             0x49, 0x52, 0x4E];
-        assert_eq!(unpad(input), expected);
+        assert_eq!(unpad(input), Some(expected));
     }
 
     #[test]
@@ -170,7 +172,7 @@ mod test {
                             0x4F, 0x57, 0x20, 0x53,
                             0x42, 0x55, 0x4D, 0x41,
                             0x49, 0x52, 0x4E, 0x45];
-        assert_eq!(unpad(input), expected);
+        assert_eq!(unpad(input), Some(expected));
     }
 
     #[test]
@@ -178,17 +180,20 @@ mod test {
         let input = b"ICE ICE BABY\x04\x04\x04\x04";
 
         assert!(validate_padding(input));
+        assert_eq!(unpad(input).unwrap(), b"ICE ICE BABY");
     }
 
     #[test]
     fn chal15_validate_2() {
         let input = b"ICE ICE BABY\x05\x05\x05\x05";
         assert!(!validate_padding(input));
+        assert_eq!(None, unpad(input));
     }
 
     #[test]
     fn chal15_validate_3() {
         let input = b"ICE ICE BABY\x01\x02\x03\x04";
         assert!(!validate_padding(input));
+        assert_eq!(None, unpad(input));
     }
 }

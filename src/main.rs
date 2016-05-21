@@ -70,7 +70,7 @@ fn main() {
             let result = pad(input.as_slice(), bsize);
             print!("{}", String::from_utf8(result).unwrap());},
         Operation::Unpad => {
-            let result = unpad(input.as_slice());
+            let result = unpad(input.as_slice()).unwrap();
             print!("{}", String::from_utf8(result).unwrap());},
         Operation::Validate => {
             if validate_padding(input.as_slice()) {
