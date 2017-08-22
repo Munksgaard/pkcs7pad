@@ -42,7 +42,7 @@ fn main() {
     };
 
     let input: Vec<u8> = match m.free.as_slice() {
-        [ref s, ..] => {
+        &[ref s, ..] => {
             let mut buf = Vec::new();
             let file = File::open(&Path::new(s));
             let mut input = file.unwrap();
